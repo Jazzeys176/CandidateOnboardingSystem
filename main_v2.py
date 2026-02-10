@@ -18,7 +18,7 @@ def main_v2():
     
     # User requested to provide data
     resume_path = os.path.join(base_dir, "inputs", "Resume.pdf")
-    id_card_path = os.path.join(base_dir, "inputs", "pan_father.jpeg")
+    id_card_path = os.path.join(base_dir, "inputs", "aadhar_card.jpeg")
 
     # Check file existence
     if not os.path.exists(resume_path):
@@ -42,9 +42,28 @@ def main_v2():
         print("\nApplying Regex Extraction to ID Card Data...")
         id_data = extract_id_fields(ocr_results)
     
+    # Load Transcript
+    transcript_path = os.path.join(base_dir, "inputs", "transcript.txt")
+    transcript_text = ""
+    if os.path.exists(transcript_path):
+        with open(transcript_path, "r") as f:
+            transcript_text = f.read()
+            print(f"\nLoaded Transcript: {len(transcript_text)} chars")
+    
+    # Load Onboarding Form
+    form_path = os.path.join(base_dir, "inputs", "onboarding_form.json")
+    form_data = None
+    if os.path.exists(form_path):
+        with open(form_path, "r") as f:
+            try:
+                form_data = json.load(f)
+                print(f"Loaded Onboarding Form Data")
+            except json.JSONDecodeError:
+                print("Error loading onboarding_form.json")
+
     # Generate Golden Record
-    print("\nBuilding Golden Record (Resume + ID)...")
-    golden_record = extract_candidate_data(resume_text, transcript_text="", id_data=id_data)
+    print("\nBuilding Golden Record (Resume + ID + Form + Transcript)...")
+    golden_record = extract_candidate_data(resume_text, transcript_text=transcript_text, id_data=id_data, form_data=form_data)
     
     print("\n--- Golden Record (KB) ---\n")
     print(golden_record)

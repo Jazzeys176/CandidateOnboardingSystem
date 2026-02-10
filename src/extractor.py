@@ -122,26 +122,59 @@ def extract_id_fields(ocr_results):
     print("----------------------------------------\n")
     return extracted
 
-def extract_candidate_data(resume_text, transcript_text, id_data=None):
+def extract_candidate_data(resume_text, transcript_text, id_data=None, form_data=None):
     """
-    Combines OCR extracted ID data with LLM-parsed resume data.
+    Combines OCR extracted ID data, Resume, Transcript, and Form Data into a detailed Golden Record.
     """
-    # ... (rest of the code remains the same)
     api_key = os.getenv("GROQ_API_KEY")
     client = Groq(api_key=api_key)
 
     prompt = f"""
-    Act as a Senior Data Extraction Engineer. Create a JSON 'Golden Record'.
+    Act as a Senior AI Solutions Architect. Create a consolidated JSON 'Golden Record' for a candidate.
     
-    Inputs:
-    [Resume] {resume_text}
-    [Transcript] {transcript_text}
-    [ID Card Data] {json.dumps(id_data) if id_data else 'None'}
+    Data Sources:
+    1. [Resume] (Source: OCR)
+    {resume_text}
+    
+    2. [ID Card Data] (Source: Spatial OCR)
+    {json.dumps(id_data) if id_data else 'None'}
+    
+    3. [Onboarding Form Data] (Source: User Input)
+    {json.dumps(form_data) if form_data else 'None'}
+    
+    4. [HR Transcript] (Source: Uploaded File)
+    {transcript_text}
 
-    Instructions:
-    - Merge ID Card Data (Type: {id_data.get('id_type') if id_data else 'Unknown'}, Number: {id_data.get('id_number') if id_data else 'Unknown'}) into the 'personal_details' section or a dedicated 'identity_verification' section.
-    - Format: {{ "personal_details": {{"name", "id_type", "id_number", "pincode", ...}}, "education": [], "employment": [] }}
-    - Output strictly valid JSON only.
+    Conflict Resolution Rules:
+    - Identity (Name, ID Numbers): Prioritize [ID Card Data] (especially Aadhar/PAN).
+    - Current Status (Availability, Current Job): Prioritize [HR Transcript].
+    - Employment/Education History: Prioritize [Resume].
+    - Contact Info: Prioritize [Onboarding Form Data] if available, else Resume.
+
+    Output Schema:
+    The output must be a single valid JSON object with the following structure:
+    {{
+      "personal_details": {{
+        "name": "...",
+        "email": "...",
+        "phone": "...",
+        "id_type": "...",
+        "id_number": "...",
+        "address": "...",
+        "pincode": "..."
+      }},
+      "education": [
+        {{ "institution": "...", "degree": "...", "year": "...", "score": "..." }}
+      ],
+      "employment": [
+        {{ "company": "...", "role": "...", "start_date": "...", "end_date": "..." }}
+      ],
+      "metadata": {{
+        "sources_verified": ["Resume", "ID_Card", "Transcript", "Form"]
+      }}
+    }}
+    
+    Constraint: Output ONLY valid JSON.
     """
 
     completion = client.chat.completions.create(

@@ -92,7 +92,7 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 ### Step 3: Install Dependencies
 
 ```bash
-pip install groq python-dotenv easyocr pdf2image Pillow numpy torch transformers optimum[onnxruntime] reportlab streamlit
+pip install -r requirements.txt
 ```
 
 ### Step 4: Install Poppler (for PDF processing)
